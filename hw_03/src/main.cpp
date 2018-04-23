@@ -1,9 +1,13 @@
-#include "Huffman.h"
+#include <exception>
+#include "huffman.h"
 #include "fstream"
 
 using namespace std;
 
 int main(int argc, char** argv) {
+    if (argc != 3) {
+        throw(std::runtime_error("kek"));
+    }
     ifstream in(argv[2]);
     ofstream out(argv[3]);
 
