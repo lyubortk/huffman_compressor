@@ -129,6 +129,8 @@ namespace {
         return static_cast<bool>(in); 
     }
 
+
+
     HuffmanTree::HuffmanTree(unsigned char c, uint64_t frequency)
         : root(new HuffmanTreeNode(c, frequency)) {}
 
@@ -196,6 +198,8 @@ namespace {
     unsigned char HuffmanTree::HuffmanTreeWalker::get_byte() const {
         return cur->c;
     }
+
+
 
     HuffmanTree::HuffmanTreeNode::HuffmanTreeNode(HuffmanTreeNode* left, 
                                                   HuffmanTreeNode* right)
@@ -303,22 +307,27 @@ namespace HuffmanArchiver {
     }
 
     Codes::Codes(const Frequencies& frequencies) {
-        std::priority_queue<HuffmanTree, std::vector<HuffmanTree>, HuffmanTreeCMP> 
-            tree_priority_q;
+        std::vector<HuffmanTree> priority_q;
 
         for (int i = 0; i < 256; ++i) {
-            tree_priority_q.push(HuffmanTree(i, frequencies[i]));
+            priority_q.push_back(HuffmanTree(i, frequencies[i]));
+        }
+            std::make_heap(priority_q.begin(), priority_q.end(), HuffmanTreeCMP());
+
+        while (priority_q.size() != 1) {
+            HuffmanTree first = std::move(priority_q.front());
+            pop_heap(priority_q.begin(), priority_q.end(), HuffmanTreeCMP());
+            priority_q.pop_back();
+
+            HuffmanTree second = std::move(priority_q.front());
+            pop_heap(priority_q.begin(), priority_q.end(), HuffmanTreeCMP());
+            priority_q.pop_back();
+
+            priority_q.push_back(HuffmanTree(first, second));
+            push_heap(priority_q.begin(), priority_q.end(), HuffmanTreeCMP());
         }
 
-        while (tree_priority_q.size() != 1) {
-            HuffmanTree first = tree_priority_q.top();
-            tree_priority_q.pop();
-            HuffmanTree second = tree_priority_q.top();
-            tree_priority_q.pop();
-            tree_priority_q.push(HuffmanTree(first, second));
-        }
-
-        HuffmanTree tree = tree_priority_q.top();
+        HuffmanTree tree = std::move(priority_q.front());
         tree.compute_codes(*this);
     }
 

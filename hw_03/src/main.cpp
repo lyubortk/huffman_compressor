@@ -5,7 +5,7 @@
 using namespace std;
 
 int main(int argc, char** argv) {
-    if (argc != 3) {
+    if (argc != 4) {
         throw(std::runtime_error("kek"));
     }
     ifstream in(argv[2]);
