@@ -1,9 +1,9 @@
 #include <queue>
 #include <algorithm>
-#include <iostream> ///////
 #include "huffman.h"
 
 using std::uint64_t;
+using std::size_t;
 
 namespace {
 
@@ -15,10 +15,12 @@ namespace {
         ~HuffmanBitWriter();
 
         void write(const HuffmanArchiver::Codeword& codeword);
+        uint64_t get_written_cnt() const;
     private:
         std::ostream& out;
         unsigned char buf;
         int pos;
+        uint64_t written_cnt;
     };
     
     class HuffmanBitReader {
@@ -28,10 +30,12 @@ namespace {
         HuffmanBitReader& operator=(const HuffmanBitReader&) = delete;
 
         bool read(bool& value);
+        uint64_t get_read_cnt() const;
     private:
         std::istream& in;
         unsigned char buf;
         int pos;
+        uint64_t read_cnt;
     };
 
     class HuffmanTree {
@@ -98,18 +102,20 @@ namespace {
             const HuffmanTree& a, const HuffmanTree& b) const {
         return a.get_frequency() > b.get_frequency();
     }
-     
+    
+
+
     HuffmanBitWriter::HuffmanBitWriter(std::ostream& out_stream) 
-            : out(out_stream), buf(0), pos(7) {
+            : out(out_stream), buf(0), pos(7), written_cnt(0) {
     }
     
     void HuffmanBitWriter::write(const HuffmanArchiver::Codeword& codeword) {
-        for (bool bool_val: codeword) {
-            unsigned char bit = bool_val? 1 : 0;
+        for (unsigned char bit: codeword) {
             if (pos == -1) {
                 out.write(reinterpret_cast<char*>(&buf), 1);
                 pos = 7;
                 buf = 0;
+                written_cnt++;
             }
             buf ^= (bit << pos);
             --pos;
@@ -118,16 +124,23 @@ namespace {
 
     HuffmanBitWriter::~HuffmanBitWriter() {
         out.write(reinterpret_cast<char*>(&buf), 1);
+        written_cnt++;
+    }
+    
+    uint64_t HuffmanBitWriter::get_written_cnt() const {
+        return written_cnt;
     }
 
+
     HuffmanBitReader::HuffmanBitReader(std::istream& in_stream) 
-            : in(in_stream), buf(0), pos(-1) {
+            : in(in_stream), buf(0), pos(-1), read_cnt(0) {
     }
     
     bool HuffmanBitReader::read(bool& value) {
         if (pos == -1) {
             in.read(reinterpret_cast<char*>(&buf), 1);
             pos = 7;
+            read_cnt++;
         }
 
         if (in) {
@@ -137,7 +150,10 @@ namespace {
 
         return static_cast<bool>(in); 
     }
-
+    
+    uint64_t HuffmanBitReader::get_read_cnt() const {
+        return read_cnt;
+    }
 
 
     HuffmanTree::HuffmanTree(unsigned char byte, uint64_t frequency_val)
@@ -258,35 +274,41 @@ namespace {
 
 namespace HuffmanArchiver {
 
-    uint64_t encode(const Codes& codes, std::istream& in, std::ostream& out) {
+    void encode(const Codes& codes, std::istream& in, std::ostream& out,
+                uint64_t& in_size, uint64_t& out_size) {
         HuffmanBitWriter writer(out);
         unsigned char c; 
-        uint64_t size = 0;
+        in_size = 0;
         while (in.read(reinterpret_cast<char*>(&c), 1)) {
             writer.write(codes[c]);
-            size++;
+            in_size++;
         }
-        return size;
+        out_size = writer.get_written_cnt();
     }     
 
     void decode(const Codes& codes, std::istream& in, 
-                std::ostream& out, uint64_t size) {
+                std::ostream& out, uint64_t bytes_encoded, 
+                uint64_t& in_size, uint64_t& out_size) {
         HuffmanBitReader reader(in);
         HuffmanTree tree(codes);
         HuffmanTree::HuffmanTreeWalker walker(tree);
 
-        bool temp;
-        while (reader.read(temp) && size) {
-            walker.go(temp);
+        out_size = bytes_encoded;
+
+        bool bit;
+        while (reader.read(bit) && bytes_encoded) {
+            walker.go(bit);
             if (walker.is_leaf()) {
                 unsigned char byte = walker.get_byte();
                 out.write(reinterpret_cast<char*>(&byte), 1);
-                --size;
+                --bytes_encoded;
             }
         }
+        in_size = reader.get_read_cnt();
     }
 
-    void encode(std::istream& in, std::ostream& out) {
+    void encode(std::istream& in, std::ostream& out,
+                uint64_t& in_size, uint64_t& out_size) {
         out.seekp(8, std::ostream::cur);
 
         Frequencies frequencies;
@@ -297,13 +319,14 @@ namespace HuffmanArchiver {
 
         in.clear();
         in.seekg(0);
-        uint64_t size = encode(codes, in, out);
+        encode(codes, in, out, in_size, out_size);
 
         out.seekp(0);
-        out.write(reinterpret_cast<char*>(&size), 8);
+        out.write(reinterpret_cast<char*>(&in_size), 8);
     }
 
-    void decode(std::istream& in, std::ostream& out) {
+    void decode(std::istream& in, std::ostream& out,
+                uint64_t& in_size, uint64_t& out_size) {
         uint64_t size;
         in.read(reinterpret_cast<char*>(&size), 8);
 
