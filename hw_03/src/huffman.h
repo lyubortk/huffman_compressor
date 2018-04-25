@@ -1,3 +1,5 @@
+#pragma once
+
 #include <istream>
 #include <ostream>
 #include <vector>
@@ -6,9 +8,13 @@
 
 namespace HuffmanArchiver {
     const std::size_t NUM_OF_BYTES = 256;
+    const std::uint64_t FREQUENCY_TABLE_SIZE = 2048;
+    const std::uint64_t HEADER_SIZE = 8 + FREQUENCY_TABLE_SIZE;
 
-    std::uint64_t encode(std::istream& in, std::ostream& out);
-    std::uint64_t decode(std::istream& in, std::ostream& out);
+    void encode(std::istream& in, std::ostream& out, 
+                std::uint64_t& in_size, std::uint64_t& out_size);
+    void decode(std::istream& in, std::ostream& out,
+                std::uint64_t& in_size, std::uint64_t& out_sizse);
     
     class Frequencies { 
     public:
@@ -41,9 +47,10 @@ namespace HuffmanArchiver {
         Codeword arr[NUM_OF_BYTES];
     };
 
-    std::uint64_t enocde(const Codes& codes, 
-                         std::istream& in, std::ostream& out);
+    void enocde(const Codes& codes, std::istream& in, std::ostream& out, 
+                std::uint64_t& in_size, std::uint64_t& out_size);
 
-    std::uint64_t decode(const Codes& codes, std::istream& in, 
-                         std::ostream& out, std::uint64_t size);
+    void decode(const Codes& codes, std::istream& in, 
+                std::ostream& out, std::uint64_t bytes_encoded,
+                std::uint64_t& in_size, std::uint64_t& out_size);
 } 
