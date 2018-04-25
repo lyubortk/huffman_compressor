@@ -1,5 +1,5 @@
 CXX = g++
-CXXFLAGS = -g -Wall -Wextra -pedantic -Werror -std=c++17 -I$(HUF_INCL_DIR)
+CXXFLAGS = -O3 -Wall -Wextra -Wshadow -pedantic -Werror -std=c++17 -I$(HUF_INCL_DIR)
 
 HUF_INCL_DIR = src
 TEST_INCL_DIR = test
@@ -26,7 +26,7 @@ $(TEST_EXE): $(BIN_DIR) $(TEST_OBJECTS)
 $(HUF_OBJECTS): $$(patsubst $(BIN_DIR)/%.o,$(HUF_DIR)/%.cpp,$$@) $(HUF_INCLUDES)
 	$(CXX) $(CXXFLAGS) -c -o $@ $<
 
-$(TEST_OBJECTS): $(patsubst $(BIN_DIR)/%.o,$(TES_DIR)/%.cpp,$@) $(TEST_INCLUDES)
+$(TEST_OBJECTS): $$(patsubst $(BIN_DIR)/%.o,$(TES_DIR)/%.cpp,$$@) $(TEST_INCLUDES)
 	$(CXX) $(CXXFLAGS) -c -o $@ $<
 
 $(BIN_DIR):

@@ -1,6 +1,6 @@
 #include <queue>
 #include <algorithm>
-
+#include <iostream> ///////
 #include "huffman.h"
 
 using std::uint64_t;
@@ -9,7 +9,7 @@ namespace {
 
     class HuffmanBitWriter {
     public:
-        HuffmanBitWriter(std::ostream& out);
+        HuffmanBitWriter(std::ostream& out_stream);
         HuffmanBitWriter(const HuffmanBitWriter&) = delete;
         HuffmanBitWriter& operator=(const HuffmanBitWriter&) = delete;
         ~HuffmanBitWriter();
@@ -23,7 +23,7 @@ namespace {
     
     class HuffmanBitReader {
     public:
-        HuffmanBitReader(std::istream& in);
+        HuffmanBitReader(std::istream& in_stream);
         HuffmanBitReader(const HuffmanBitReader&) = delete;
         HuffmanBitReader& operator=(const HuffmanBitReader&) = delete;
 
@@ -36,8 +36,8 @@ namespace {
 
     class HuffmanTree {
     public:
-        HuffmanTree(unsigned char c, uint64_t frequency);
-        HuffmanTree(HuffmanTree& left, HuffmanTree& right);
+        HuffmanTree(unsigned char byte, uint64_t frequency_val);
+        HuffmanTree(HuffmanTree&& left, HuffmanTree&& right);
         HuffmanTree(const HuffmanArchiver::Codes& codes);
         ~HuffmanTree();
         HuffmanTree(HuffmanTree& other) = delete;
@@ -52,8 +52,9 @@ namespace {
             friend class HuffmanTreeWalker;
             friend class HuffmanTree;
         public:
-            HuffmanTreeNode(HuffmanTreeNode* left, HuffmanTreeNode* right);
-            HuffmanTreeNode(unsigned char c, uint64_t frequency);
+            HuffmanTreeNode(HuffmanTreeNode* left_child, 
+                            HuffmanTreeNode* right_child);
+            HuffmanTreeNode(unsigned char byte, uint64_t frequency_val);
             ~HuffmanTreeNode() = default;
             HuffmanTreeNode(const HuffmanTreeNode&) = delete;
             HuffmanTreeNode& operator=(const HuffmanTreeNode&) = delete;
@@ -86,18 +87,21 @@ namespace {
             HuffmanTreeNode* cur;
         };
 
-    };
-
-    class HuffmanTreeCMP {
-    public:
-        bool operator()(const HuffmanTree& a, const HuffmanTree& b) {
-            return a.get_frequency() < b.get_frequency();
-        }
+        class HuffmanTreeGreater {
+        public:
+            bool operator()(const HuffmanTree& a, const HuffmanTree& b) const;
+        };
     };
 
     
-    HuffmanBitWriter::HuffmanBitWriter(std::ostream& out) 
-        : out(out), buf(0), pos(-1) {}
+    bool HuffmanTree::HuffmanTreeGreater::operator()(
+            const HuffmanTree& a, const HuffmanTree& b) const {
+        return a.get_frequency() > b.get_frequency();
+    }
+     
+    HuffmanBitWriter::HuffmanBitWriter(std::ostream& out_stream) 
+            : out(out_stream), buf(0), pos(7) {
+    }
     
     void HuffmanBitWriter::write(const HuffmanArchiver::Codeword& codeword) {
         for (bool bool_val: codeword) {
@@ -116,39 +120,43 @@ namespace {
         out.write(reinterpret_cast<char*>(&buf), 1);
     }
 
-    HuffmanBitReader::HuffmanBitReader(std::istream& in) 
-        : in(in), buf(0), pos(-1) {}
+    HuffmanBitReader::HuffmanBitReader(std::istream& in_stream) 
+            : in(in_stream), buf(0), pos(-1) {
+    }
     
     bool HuffmanBitReader::read(bool& value) {
         if (pos == -1) {
             in.read(reinterpret_cast<char*>(&buf), 1);
             pos = 7;
         }
-        if (!static_cast<bool>(in)) return static_cast<bool>(in);
-        value = ((buf >> pos) & 1 ? 1 : 0);
+
+        if (in) {
+            value = (buf >> pos)&1;
+            --pos;
+        }
+
         return static_cast<bool>(in); 
     }
 
 
 
-    HuffmanTree::HuffmanTree(unsigned char c, uint64_t frequency)
-        : root(new HuffmanTreeNode(c, frequency)) {}
+    HuffmanTree::HuffmanTree(unsigned char byte, uint64_t frequency_val)
+            : root(new HuffmanTreeNode(byte, frequency_val)) {
+    }
 
-    HuffmanTree::HuffmanTree(HuffmanTree& left, HuffmanTree& right)
-        : root(new HuffmanTreeNode(left.root, right.root)) {
-        
+    HuffmanTree::HuffmanTree(HuffmanTree&& left, HuffmanTree&& right)
+            : root(new HuffmanTreeNode(left.root, right.root)) {
         left.root = nullptr;
         right.root = nullptr;
     }
 
     HuffmanTree::HuffmanTree(const HuffmanArchiver::Codes& codes) 
-        :root(new HuffmanTreeNode(nullptr, nullptr)) {
-        
+            :root(new HuffmanTreeNode(nullptr, nullptr)) {
         HuffmanTreeNode* cur;
         for (int i = 0; i < 256; ++i) {
             cur = root;          
             for (bool bit: codes[i]) {
-                HuffmanTreeNode* dest = bit ? cur->right : cur->left;
+                HuffmanTreeNode*& dest = bit ? cur->right : cur->left;
                 if (dest == nullptr) {
                     dest = new HuffmanTreeNode(nullptr, nullptr);
                 }
@@ -159,11 +167,13 @@ namespace {
     }
 
     HuffmanTree::~HuffmanTree() {
-        root->recursive_delete();    
+        if (root != nullptr) {
+            root->recursive_delete();
+        }
     }
     
     HuffmanTree::HuffmanTree(HuffmanTree&& other)
-        : root(other.root) {
+            : root(other.root) {
         other.root = nullptr;
     }
 
@@ -180,9 +190,11 @@ namespace {
         std::vector<bool> vec;
         root->compute_codes(codes, vec);
     }
+    
 
     HuffmanTree::HuffmanTreeWalker::HuffmanTreeWalker(const HuffmanTree& tree) 
-        : root(tree.root), cur(root) {}
+            : root(tree.root), cur(root) {
+    }
 
     void HuffmanTree::HuffmanTreeWalker::go(bool to) {
         if (is_leaf()) {
@@ -201,9 +213,9 @@ namespace {
 
 
 
-    HuffmanTree::HuffmanTreeNode::HuffmanTreeNode(HuffmanTreeNode* left, 
-                                                  HuffmanTreeNode* right)
-        : left(left), right(right), frequency(0) {
+    HuffmanTree::HuffmanTreeNode::HuffmanTreeNode(HuffmanTreeNode* left_child, 
+                                                  HuffmanTreeNode* right_child)
+            : left(left_child), right(right_child), frequency(0) {
         if (left != nullptr) {
             frequency += left->frequency;
         } 
@@ -212,9 +224,10 @@ namespace {
         }
     }
 
-    HuffmanTree::HuffmanTreeNode::HuffmanTreeNode(unsigned char c, 
-                                                  uint64_t frequency)
-        : left(nullptr), right(nullptr), c(c), frequency(frequency) {}
+    HuffmanTree::HuffmanTreeNode::HuffmanTreeNode(unsigned char byte, 
+                                                  uint64_t frequency_val)
+            : left(nullptr), right(nullptr), c(byte), frequency(frequency_val) {
+    }
         
     void HuffmanTree::HuffmanTreeNode::recursive_delete() {
         if (left != nullptr) {
@@ -245,52 +258,66 @@ namespace {
 
 namespace HuffmanArchiver {
 
-    void encode(const Codes& codes, std::istream& in, std::ostream& out) {
+    uint64_t encode(const Codes& codes, std::istream& in, std::ostream& out) {
         HuffmanBitWriter writer(out);
         unsigned char c; 
-        in.read(reinterpret_cast<char*>(&c), 1);
-        writer.write(codes[c]);     
+        uint64_t size = 0;
+        while (in.read(reinterpret_cast<char*>(&c), 1)) {
+            writer.write(codes[c]);
+            size++;
+        }
+        return size;
     }     
 
-    void decode(const Codes& codes, std::istream& in, std::ostream& out) {
+    void decode(const Codes& codes, std::istream& in, 
+                std::ostream& out, uint64_t size) {
         HuffmanBitReader reader(in);
         HuffmanTree tree(codes);
         HuffmanTree::HuffmanTreeWalker walker(tree);
 
         bool temp;
-        while (reader.read(temp)) {
+        while (reader.read(temp) && size) {
             walker.go(temp);
             if (walker.is_leaf()) {
-                unsigned char temp = walker.get_byte();
-                out.write(reinterpret_cast<char*>(&temp), 1);
+                unsigned char byte = walker.get_byte();
+                out.write(reinterpret_cast<char*>(&byte), 1);
+                --size;
             }
         }
-
     }
 
     void encode(std::istream& in, std::ostream& out) {
+        out.seekp(8, std::ostream::cur);
+
         Frequencies frequencies;
         frequencies.add(in);
+        frequencies.save(out);
+
         Codes codes(frequencies);
+
         in.clear();
         in.seekg(0);
-        encode(codes, in, out);
+        uint64_t size = encode(codes, in, out);
+
+        out.seekp(0);
+        out.write(reinterpret_cast<char*>(&size), 8);
     }
 
     void decode(std::istream& in, std::ostream& out) {
-        Frequencies frequencies(in);
+        uint64_t size;
+        in.read(reinterpret_cast<char*>(&size), 8);
+
+        Frequencies frequencies;
+        frequencies.load_saved(in);
+        
         Codes codes(frequencies);
-        decode(codes, in, out);
+
+        decode(codes, in, out, size);
     }
 
     Frequencies::Frequencies()
         : arr() {}
     
-    Frequencies::Frequencies(std::istream& in)
-        : arr() {
-        add(in); 
-    }
-
     uint64_t Frequencies::operator[](size_t ind) const {
         return arr[ind];
     }
@@ -305,26 +332,39 @@ namespace HuffmanArchiver {
             arr[c]++;
         }
     }
+    
+    void Frequencies::save(std::ostream& out) {
+        for (int i = 0; i < 256; ++i) {
+            out.write(reinterpret_cast<char*>(&arr[i]), 8);
+        }
+    }
+    
+    void Frequencies::load_saved(std::istream& in) {
+        for (int i = 0; i < 256; ++i) {
+            in.read(reinterpret_cast<char*>(&arr[i]), 8);
+        }
+    }
 
     Codes::Codes(const Frequencies& frequencies) {
-        std::vector<HuffmanTree> priority_q;
+        using tree_greater = HuffmanTree::HuffmanTreeGreater;
 
+        std::vector<HuffmanTree> priority_q;
         for (int i = 0; i < 256; ++i) {
             priority_q.push_back(HuffmanTree(i, frequencies[i]));
         }
-            std::make_heap(priority_q.begin(), priority_q.end(), HuffmanTreeCMP());
+        std::make_heap(priority_q.begin(), priority_q.end(), tree_greater());
 
         while (priority_q.size() != 1) {
-            HuffmanTree first = std::move(priority_q.front());
-            pop_heap(priority_q.begin(), priority_q.end(), HuffmanTreeCMP());
+            pop_heap(priority_q.begin(), priority_q.end(), tree_greater());
+            HuffmanTree first = std::move(priority_q.back());
             priority_q.pop_back();
 
-            HuffmanTree second = std::move(priority_q.front());
-            pop_heap(priority_q.begin(), priority_q.end(), HuffmanTreeCMP());
+            pop_heap(priority_q.begin(), priority_q.end(), tree_greater());
+            HuffmanTree second = std::move(priority_q.back());
             priority_q.pop_back();
 
-            priority_q.push_back(HuffmanTree(first, second));
-            push_heap(priority_q.begin(), priority_q.end(), HuffmanTreeCMP());
+            priority_q.push_back(HuffmanTree(std::move(first), std::move(second)));
+            push_heap(priority_q.begin(), priority_q.end(), tree_greater());
         }
 
         HuffmanTree tree = std::move(priority_q.front());

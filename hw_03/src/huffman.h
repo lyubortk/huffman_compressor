@@ -12,7 +12,6 @@ namespace HuffmanArchiver {
     class Frequencies { 
     public:
         Frequencies();
-        Frequencies(std::istream& in);
         ~Frequencies() = default;
         Frequencies(const Frequencies&) = default;
         Frequencies& operator=(const Frequencies&) = default;
@@ -20,6 +19,8 @@ namespace HuffmanArchiver {
         std::uint64_t operator[](size_t ind) const;
         std::uint64_t& operator[](size_t ind);
         void add(std::istream& in);
+        void save(std::ostream& out);
+        void load_saved(std::istream& in);
     private: 
         uint64_t arr[256];
     };
@@ -39,6 +40,9 @@ namespace HuffmanArchiver {
         Codeword arr[256];
     };
 
-    void enocde(const Codes& codes, std::istream& in, std::ostream& out);
-    void decode(const Codes& codes, std::istream& in, std::ostream& out);
+    std::uint64_t enocde(const Codes& codes, 
+                         std::istream& in, std::ostream& out);
+
+    void decode(const Codes& codes, std::istream& in, 
+                std::ostream& out, std::uint64_t size);
 } 
