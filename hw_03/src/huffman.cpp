@@ -100,14 +100,14 @@ namespace HuffmanArchiver {
     }
     
     void Frequencies::save(std::ostream& out) {
-        for (int i = 0; i < 256; ++i) {
+        for (std::uint_fast16_t i = 0; i < NUM_OF_BYTES; ++i) {
             out.write(reinterpret_cast<char*>(&arr[i]), 8);
         }
         if (out.fail()) throw HuffmanArchiver::IO_error("write error");
     }
     
     void Frequencies::load_saved(std::istream& in) {
-        for (int i = 0; i < 256; ++i) {
+        for (std::uint_fast16_t i = 0; i < NUM_OF_BYTES; ++i) {
             in.read(reinterpret_cast<char*>(&arr[i]), 8);
         }
         if (in.fail()) throw HuffmanArchiver::IO_error(
@@ -118,7 +118,7 @@ namespace HuffmanArchiver {
 
         std::priority_queue<HuffmanTree, std::vector<HuffmanTree>, 
                                          HuffmanTree::Greater> priority_q;
-        for (int i = 0; i < 256; ++i) {
+        for (std::uint_fast16_t i = 0; i < NUM_OF_BYTES; ++i) {
             priority_q.push(HuffmanTree(i, frequencies[i]));
         }
 
