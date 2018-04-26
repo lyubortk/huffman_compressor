@@ -36,7 +36,7 @@ int main(int argc, char* argv[]) {
             } else if (opt == 'o') {
                 output_path = optarg;
             } else if (opt == ':') {
-                throw HuffmanArchiver::CL_options_error( "option " + 
+                throw HuffmanArchiver::CL_options_error( "option -" + 
                                 std::string(1, optopt) + " requires argument");
             } else {
                 throw HuffmanArchiver::CL_options_error("uknown option: " + 
