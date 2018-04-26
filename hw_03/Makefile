@@ -1,5 +1,5 @@
 CXX = g++
-CXXFLAGS = -g -Wall -Wextra -Wshadow -pedantic -Werror -std=c++17 -I$(HUF_INCL_DIR) -I$(TEST_INCL_DIR)
+CXXFLAGS = -O3 -Wall -Wextra -Wshadow -pedantic -Werror -std=c++17 -I$(HUF_INCL_DIR) -I$(TEST_INCL_DIR)
 
 HUF_INCL_DIR = src
 TEST_INCL_DIR = test_src
