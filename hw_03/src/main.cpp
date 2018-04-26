@@ -9,6 +9,7 @@
 
 #include "huffman.h"
 
+
 int main(int argc, char* argv[]) {
     try {
         char mode = '\0';
@@ -26,7 +27,8 @@ int main(int argc, char* argv[]) {
         while (opt != -1) {
             if (opt == 'c' || opt == 'u') {
                 if (mode != opt && mode != '\0') {
-                    throw std::runtime_error("incompatible arguments");
+                    throw HuffmanArchiver::CL_options_error(
+                                                      "incompatible arguments");
                 }
                 mode = opt;
             } else if (opt == 'f') {
@@ -34,25 +36,25 @@ int main(int argc, char* argv[]) {
             } else if (opt == 'o') {
                 output_path = optarg;
             } else if (opt == ':') {
-                throw std::runtime_error("option " + std::string(1, optopt) +
-                                         " requires argument");
+                throw HuffmanArchiver::CL_options_error( "option " + 
+                                std::string(1, optopt) + " requires argument");
             } else {
-                throw std::runtime_error("uknown option: " + 
-                                         std::string(1, optopt));
+                throw HuffmanArchiver::CL_options_error("uknown option: " + 
+                                                        std::string(1, optopt));
             }
             opt = getopt_long(argc, argv, short_opts, long_opts, nullptr);
         }
         
         if (input_path == "" || output_path == "" || mode == '\0') {
-            throw std::runtime_error("missing mandatory options");
+            throw HuffmanArchiver::CL_options_error(
+                        "missing mandatory options");
         }
-
 
         std::ifstream in_stream(input_path, std::ifstream::binary);
         std::ofstream out_stream(output_path, std::ofstream::binary);
         
         if (!in_stream.is_open()) {
-            throw std::istream::failure("can't open file");
+            throw HuffmanArchiver::IO_error("can't open file");
         }
 
         std::uint64_t in_size, out_size;
@@ -66,9 +68,12 @@ int main(int argc, char* argv[]) {
         std::cout << in_size << '\n' << out_size << '\n' 
                   << HuffmanArchiver::HEADER_SIZE << '\n';
 
-    } catch (const std::ios::failure& excep) {
-        std::cerr << "I/O Error:\n";
-        std::cerr << excep.what() << '\n'; 
+    } catch (const HuffmanArchiver::IO_error& excep) {
+        std::cerr << "I/O Error:\n"
+                  << excep.what() << '\n'; 
+    } catch (const HuffmanArchiver::CL_options_error& excep) {
+        std::cerr << "Options Error:\n"
+                  << excep.what() << '\n';
     }
 
     return 0;

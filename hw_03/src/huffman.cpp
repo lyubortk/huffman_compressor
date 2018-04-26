@@ -103,14 +103,14 @@ namespace HuffmanArchiver {
         for (int i = 0; i < 256; ++i) {
             out.write(reinterpret_cast<char*>(&arr[i]), 8);
         }
-        if (out.fail()) throw std::ostream::failure("write error");
+        if (out.fail()) throw HuffmanArchiver::IO_error("write error");
     }
     
     void Frequencies::load_saved(std::istream& in) {
         for (int i = 0; i < 256; ++i) {
             in.read(reinterpret_cast<char*>(&arr[i]), 8);
         }
-        if (in.fail()) throw std::istream::failure(
+        if (in.fail()) throw HuffmanArchiver::IO_error(
                              "Wrong header / read error");
     }
 
