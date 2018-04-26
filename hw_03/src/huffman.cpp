@@ -30,7 +30,7 @@ namespace HuffmanArchiver {
                 uint64_t& in_size, uint64_t& out_size) {
         HuffmanBitReader reader(in);
         HuffmanTree tree(codes);
-        HuffmanTree::HuffmanTreeWalker walker(tree);
+        HuffmanTree::TreeWalker walker(tree);
 
         out_size = bytes_encoded;
 
@@ -117,7 +117,7 @@ namespace HuffmanArchiver {
     Codes::Codes(const Frequencies& frequencies) {
 
         std::priority_queue<HuffmanTree, std::vector<HuffmanTree>, 
-                                         HuffmanTree::HuffmanTreeGreater> priority_q;
+                                         HuffmanTree::Greater> priority_q;
         for (int i = 0; i < 256; ++i) {
             priority_q.push(HuffmanTree(i, frequencies[i]));
         }

@@ -1,26 +1,70 @@
 #include <vector>
 #include <exception>
 #include <iostream>
+#include <string>
+#include <unistd.h>
+#include <getopt.h>
+
 #include "huffman.h"
 #include "fstream"
 
-using namespace std;
-
-int main(int argc, char** argv) {
+int main(int argc, char* argv[]) {
     try {
-        if (argc != 4) throw std::runtime_error("u sosi");
-        ifstream in(argv[2], std::ifstream::binary);
-        ofstream out(argv[3], std::ofstream::binary);
-    
-        std::uint64_t ins, outs;
+        char mode = '\0';
+        std::string input_path; 
+        std::string output_path;
 
-        if (argv[1] == string("to")) {
-            HuffmanArchiver::encode(in, out, ins, outs);
-        } else {
-            HuffmanArchiver::decode(in, out, ins, outs);
+        const char short_opts[] = ":cuf:o:";
+        const option long_opts[] = {
+            {"file", required_argument, nullptr, 'f'},
+            {"output", required_argument, nullptr, 'o'}
+        };
+        
+        opterr = 0;
+        char opt = getopt_long(argc, argv, short_opts, long_opts, nullptr);
+        while (opt != -1) {
+            if (opt == 'c' || opt == 'u') {
+                if (mode != opt && mode != '\0') {
+                    throw std::runtime_error("incompatible arguments");
+                }
+                mode = opt;
+            } else if (opt == 'f') {
+                input_path = optarg; 
+            } else if (opt == 'o') {
+                output_path = optarg;
+            } else if (opt == ':') {
+                throw std::runtime_error("option " + std::string(1, optopt) +
+                                         " requires argument");
+            } else {
+                throw std::runtime_error("uknown option: " + 
+                                         std::string(1, optopt));
+            }
+            opt = getopt_long(argc, argv, short_opts, long_opts, nullptr);
+        }
+        
+        if (input_path == "" || output_path == "" || mode == '\0') {
+            throw std::runtime_error("missing mandatory options");
         }
 
-        std::cout << ins << '\n' << outs << '\n';
+
+        std::ifstream in_stream(input_path, std::ifstream::binary);
+        std::ofstream out_stream(output_path, std::ofstream::binary);
+        
+        if (!in_stream.is_open()) {
+            throw std::istream::failure("can't open file");
+        }
+
+        std::uint64_t in_size, out_size;
+
+        if (mode == 'c') {
+            HuffmanArchiver::encode(in_stream, out_stream, in_size, out_size);
+        } else {
+            HuffmanArchiver::decode(in_stream, out_stream, in_size, out_size);
+        }
+
+        std::cout << in_size << '\n' << out_size << '\n' 
+                  << HuffmanArchiver::HEADER_SIZE << '\n';
+
     } catch (const std::ios::failure& excep) {
         std::cerr << "I/O Error:\n";
         std::cerr << excep.what() << '\n'; 
