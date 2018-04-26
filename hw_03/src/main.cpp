@@ -2,11 +2,12 @@
 #include <exception>
 #include <iostream>
 #include <string>
+#include <fstream>
+
 #include <unistd.h>
 #include <getopt.h>
 
 #include "huffman.h"
-#include "fstream"
 
 int main(int argc, char* argv[]) {
     try {

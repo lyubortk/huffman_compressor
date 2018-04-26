@@ -47,7 +47,7 @@ namespace HuffmanArchiver {
         Codeword arr[NUM_OF_BYTES];
     };
 
-    void enocde(const Codes& codes, std::istream& in, std::ostream& out, 
+    void encode(const Codes& codes, std::istream& in, std::ostream& out, 
                 std::uint64_t& in_size, std::uint64_t& out_size);
 
     void decode(const Codes& codes, std::istream& in, 
