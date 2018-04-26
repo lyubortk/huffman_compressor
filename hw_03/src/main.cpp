@@ -28,7 +28,7 @@ int main(int argc, char* argv[]) {
             if (opt == 'c' || opt == 'u') {
                 if (mode != opt && mode != '\0') {
                     throw HuffmanArchiver::CL_options_error(
-                                                      "incompatible arguments");
+                                    "incompatible arguments");
                 }
                 mode = opt;
             } else if (opt == 'f') {
@@ -37,10 +37,10 @@ int main(int argc, char* argv[]) {
                 output_path = optarg;
             } else if (opt == ':') {
                 throw HuffmanArchiver::CL_options_error( "option -" + 
-                                std::string(1, optopt) + " requires argument");
+                             std::string(1, optopt) + " requires argument");
             } else {
-                throw HuffmanArchiver::CL_options_error("uknown option: " + 
-                                                        std::string(1, optopt));
+                throw HuffmanArchiver::CL_options_error("unknown option: " + 
+                                                      std::string(1, optopt));
             }
             opt = getopt_long(argc, argv, short_opts, long_opts, nullptr);
         }
@@ -54,7 +54,7 @@ int main(int argc, char* argv[]) {
         std::ofstream out_stream(output_path, std::ofstream::binary);
         
         if (!in_stream.is_open()) {
-            throw HuffmanArchiver::IO_error("can't open file");
+            throw HuffmanArchiver::IO_error("can't open input file");
         }
 
         std::uint64_t in_size, out_size;
