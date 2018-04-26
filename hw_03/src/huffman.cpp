@@ -41,7 +41,9 @@ namespace HuffmanArchiver {
             if (walker.is_leaf()) {
                 unsigned char byte = walker.get_byte();
                 out.write(reinterpret_cast<char*>(&byte), 1);
-                if (out.fail()) throw std::ostream::failure("write error");
+                if (out.fail()) {
+                    throw HuffmanArchiver::IO_error("write error");
+                }
                 --bytes_encoded;
             }
         }
@@ -50,7 +52,13 @@ namespace HuffmanArchiver {
 
     void encode(std::istream& in, std::ostream& out,
                 uint64_t& in_size, uint64_t& out_size) {
-        out.seekp(8, std::ostream::cur);
+        for (size_t i = 0; i < SYSTEM_INFO_SIZE; ++i) { // seekp doesn't work for sstream at eof
+            char c = 0;
+            out.write(&c, 1);
+        }
+        if (out.fail()) {
+            throw HuffmanArchiver::IO_error("write error");
+        }
 
         Frequencies frequencies;
         frequencies.add(in);
@@ -64,7 +72,7 @@ namespace HuffmanArchiver {
         out_size += HEADER_SIZE;
 
         out.seekp(0);
-        out.write(reinterpret_cast<char*>(&in_size), 8);
+        out.write(reinterpret_cast<char*>(&in_size), SYSTEM_INFO_SIZE);
     }
 
     void decode(std::istream& in, std::ostream& out,

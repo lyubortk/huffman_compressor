@@ -8,17 +8,14 @@
 
 namespace HuffmanArchiver {
     
-    class CL_options_error : public std::runtime_error {
-        using std::runtime_error::runtime_error;
-    };
-
     class IO_error : public std::runtime_error {
         using std::runtime_error::runtime_error;
     };
 
     const std::size_t NUM_OF_BYTES = 256;
-    const std::uint64_t FREQUENCY_TABLE_SIZE = 2048;
-    const std::uint64_t HEADER_SIZE = 8 + FREQUENCY_TABLE_SIZE;
+    const std::size_t FREQUENCY_TABLE_SIZE = 2048;
+    const std::size_t SYSTEM_INFO_SIZE = 8;
+    const std::uint64_t HEADER_SIZE = SYSTEM_INFO_SIZE + FREQUENCY_TABLE_SIZE;
 
     void encode(std::istream& in, std::ostream& out, 
                 std::uint64_t& in_size, std::uint64_t& out_size);

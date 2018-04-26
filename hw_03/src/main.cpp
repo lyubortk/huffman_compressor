@@ -9,6 +9,9 @@
 
 #include "huffman.h"
 
+class CL_options_error : public std::runtime_error {
+    using std::runtime_error::runtime_error;
+};
 
 int main(int argc, char* argv[]) {
     try {
@@ -27,8 +30,7 @@ int main(int argc, char* argv[]) {
         while (opt != -1) {
             if (opt == 'c' || opt == 'u') {
                 if (mode != opt && mode != '\0') {
-                    throw HuffmanArchiver::CL_options_error(
-                                    "incompatible arguments");
+                    throw CL_options_error("incompatible arguments");
                 }
                 mode = opt;
             } else if (opt == 'f') {
@@ -36,18 +38,17 @@ int main(int argc, char* argv[]) {
             } else if (opt == 'o') {
                 output_path = optarg;
             } else if (opt == ':') {
-                throw HuffmanArchiver::CL_options_error( "option -" + 
-                             std::string(1, optopt) + " requires argument");
+                throw CL_options_error("option -" + std::string(1, optopt) + 
+                                                        " requires argument");
             } else {
-                throw HuffmanArchiver::CL_options_error("unknown option: " + 
+                throw CL_options_error("unknown option: " + 
                                                       std::string(1, optopt));
             }
             opt = getopt_long(argc, argv, short_opts, long_opts, nullptr);
         }
         
         if (input_path == "" || output_path == "" || mode == '\0') {
-            throw HuffmanArchiver::CL_options_error(
-                        "missing mandatory options");
+            throw CL_options_error("missing mandatory options");
         }
 
         std::ifstream in_stream(input_path, std::ifstream::binary);
@@ -71,7 +72,7 @@ int main(int argc, char* argv[]) {
     } catch (const HuffmanArchiver::IO_error& excep) {
         std::cerr << "I/O Error:\n"
                   << excep.what() << '\n'; 
-    } catch (const HuffmanArchiver::CL_options_error& excep) {
+    } catch (const CL_options_error& excep) {
         std::cerr << "Options Error:\n"
                   << excep.what() << '\n';
     }
