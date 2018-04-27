@@ -36,7 +36,9 @@ namespace HuffmanImpl {
         if (pos != 7) {
             dynamic_cast<std::ostream&>(stream).write(
                 reinterpret_cast<char*>(&buf), 1);
-            if(stream.fail()) throw HuffmanArchiver::IO_error("write error");
+            if(stream.fail()) {
+                throw HuffmanArchiver::IO_error("write error");
+            }
             pos = 7;
             buf = 0;
             byte_cnt++;
@@ -53,7 +55,9 @@ namespace HuffmanImpl {
         if (pos == -1) {
             dynamic_cast<std::istream&>(stream).read(
                 reinterpret_cast<char*>(&buf), 1);
-            if(stream.fail()) throw HuffmanArchiver::IO_error("read error");
+            if(stream.fail()) {
+                throw HuffmanArchiver::IO_error("read error");
+            }
             pos = 7;
             byte_cnt++;
         }
