@@ -52,11 +52,11 @@ int main(int argc, char* argv[]) {
         }
 
         std::ifstream in_stream(input_path, std::ifstream::binary);
-        std::ofstream out_stream(output_path, std::ofstream::binary);
-        
         if (!in_stream.is_open()) {
             throw HuffmanArchiver::IO_error("can't open input file");
         }
+
+        std::ofstream out_stream(output_path, std::ofstream::binary);
 
         std::uint64_t in_size, out_size;
 

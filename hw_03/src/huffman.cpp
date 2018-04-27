@@ -17,10 +17,21 @@ namespace HuffmanArchiver {
         HuffmanBitWriter writer(out);
         unsigned char c; 
         in_size = 0;
-        while (in.read(reinterpret_cast<char*>(&c), 1)) {
-            writer.write(codes[c]);
-            in_size++;
+
+        try {
+            while (in.read(reinterpret_cast<char*>(&c), 1)) {
+                writer.write(codes[c]);
+                in_size++;
+            } 
+        } catch (const std::istream::failure& excep) { // in case the library user gives us streams with exceptions turned on
+            if (!in.eof()) {
+                throw excep;
+            }
         }
+        if (!in.eof()) {
+            throw HuffmanArchiver::IO_error("read error");
+        }
+
         writer.flush();
         out_size = writer.get_byte_cnt();
     }     
@@ -38,6 +49,7 @@ namespace HuffmanArchiver {
             bool bit;
             reader.read(bit);
             walker.go(bit);
+
             if (walker.is_leaf()) {
                 unsigned char byte = walker.get_byte();
                 out.write(reinterpret_cast<char*>(&byte), 1);
@@ -79,6 +91,9 @@ namespace HuffmanArchiver {
                 uint64_t& in_size, uint64_t& out_size) {
         uint64_t size;
         in.read(reinterpret_cast<char*>(&size), 8);
+        if (in.fail()) {
+            throw HuffmanArchiver::IO_error("wrong header / read error");
+        }
 
         Frequencies frequencies;
         frequencies.load_saved(in);
@@ -102,8 +117,17 @@ namespace HuffmanArchiver {
 
     void Frequencies::add(std::istream& in) {
         unsigned char c;
-        while (in.read(reinterpret_cast<char*>(&c), 1)) {
-            arr[c]++;
+        try {
+            while (in.read(reinterpret_cast<char*>(&c), 1)) {
+                arr[c]++;
+            }
+        } catch (const std::istream::failure& excep) {
+            if (!in.eof()) {
+                throw excep;
+            }
+        }
+        if (!in.eof()) {
+            throw HuffmanArchiver::IO_error("read error");
         }
     }
     
@@ -111,15 +135,18 @@ namespace HuffmanArchiver {
         for (std::uint_fast16_t i = 0; i < NUM_OF_BYTES; ++i) {
             out.write(reinterpret_cast<char*>(&arr[i]), 8);
         }
-        if (out.fail()) throw HuffmanArchiver::IO_error("write error");
+        if (out.fail()) {
+            throw HuffmanArchiver::IO_error("write error");
+        }
     }
     
     void Frequencies::load_saved(std::istream& in) {
         for (std::uint_fast16_t i = 0; i < NUM_OF_BYTES; ++i) {
             in.read(reinterpret_cast<char*>(&arr[i]), 8);
         }
-        if (in.fail()) throw HuffmanArchiver::IO_error(
-                             "Wrong header / read error");
+        if (in.fail()) {
+            throw HuffmanArchiver::IO_error("wrong header / read error");
+        }
     }
 
     Codes::Codes(const Frequencies& frequencies) {
