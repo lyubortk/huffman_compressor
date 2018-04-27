@@ -32,7 +32,7 @@ namespace HuffmanArchiver {
         std::uint64_t operator[](std::size_t ind) const;
         std::uint64_t& operator[](std::size_t ind);
         void add(std::istream& in);
-        void save(std::ostream& out);
+        void save(std::ostream& out) const;
         void load_saved(std::istream& in);
     private: 
         uint64_t arr[NUM_OF_BYTES];

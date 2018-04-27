@@ -9,7 +9,7 @@ namespace HuffmanImpl {
     HuffmanBitIO::~HuffmanBitIO() {
     }
 
-    std::uint64_t HuffmanBitIO::get_byte_cnt() {
+    std::uint64_t HuffmanBitIO::get_byte_cnt() const {
         return byte_cnt;
     }
     

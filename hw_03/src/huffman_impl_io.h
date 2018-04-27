@@ -12,7 +12,7 @@ namespace HuffmanImpl {
         HuffmanBitIO(std::ios& stream_param);
         virtual ~HuffmanBitIO() = 0;
         
-        std::uint64_t get_byte_cnt();
+        std::uint64_t get_byte_cnt() const;
     protected:
         std::ios& stream;
         unsigned char buf;

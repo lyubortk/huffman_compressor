@@ -131,9 +131,9 @@ namespace HuffmanArchiver {
         }
     }
     
-    void Frequencies::save(std::ostream& out) {
+    void Frequencies::save(std::ostream& out) const {
         for (std::uint_fast16_t i = 0; i < NUM_OF_BYTES; ++i) {
-            out.write(reinterpret_cast<char*>(&arr[i]), 8);
+            out.write(reinterpret_cast<const char*>(&arr[i]), 8);
         }
         if (out.fail()) {
             throw HuffmanArchiver::IO_error("write error");
