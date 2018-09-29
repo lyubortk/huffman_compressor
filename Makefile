@@ -1,8 +1,8 @@
 CXX = g++
 CXXFLAGS = -O3 -Wall -Wextra -Wshadow -pedantic -Werror -std=c++17 -I$(HUF_INCL_DIR) -I$(TEST_INCL_DIR)
 
-HUF_INCL_DIR = src
-TEST_INCL_DIR = test_src
+HUF_INCL_DIR = includes
+TEST_INCL_DIR = test_includes
 HUF_EXE = huffman
 TEST_EXE = test
 HUF_DIR = src
